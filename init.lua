@@ -125,6 +125,21 @@ minetest.register_globalstep(function()
 		local play_s          = 0
 		local vel = player:get_velocity()
 
+		local has_jetpack = false
+		if armor then
+			local _, armor_inv = armor.get_valid_player(armor, player, "[jetpack]")
+			local armor_list = armor_inv:get_list("armor")
+			for i, stack in pairs(armor_inv:get_list("armor")) do
+				if not stack:is_empty() then
+					local name = stack:get_name()
+					--if name:sub(1, 12) == "ctg_jetpack:" then
+						has_jetpack = minetest.get_item_group(name, "armor_jetpack") ~= nil
+					--end
+				end
+			end
+		end
+
+
 		-- basically 3D Pythagorean Theorem km/h
 		play_s = (math.sqrt(math.pow(math.abs(vel.x),2) +
 				  math.pow(math.abs(vel.y),2) +
@@ -160,7 +175,7 @@ minetest.register_globalstep(function()
 			if cur_anim then
 
 				-- Swim Through, Just Keep Swimming
-				if is_node_a_solid and
+				if is_node_a_solid and not has_jetpack and
 				   (old_anim == "swim" or
 				   old_anim == "swim_atk") then
 
@@ -170,16 +185,18 @@ minetest.register_globalstep(function()
 					if tdebug then minetest.debug("light swim") end
 
 				-- Crouch, Just Keep Crouching
-				elseif old_anim == "duck_std" or
-				       old_anim == "duck" then
+				elseif (old_anim == "duck_std" or
+				       old_anim == "duck") and
+					   not has_jetpack then
 
 					animation = "duck_std"
 					player_api.set_animation(player, animation, ani_spd/2)
 					if tdebug then minetest.debug("light crouch") end
 
 				-- Fall, Just Keep Falling
-				elseif old_anim == "fall_atk" or
-				       old_anim == "fall" then
+				elseif (old_anim == "fall_atk" or
+				       old_anim == "fall") and
+					   not has_jetpack then
 
 					animation = "fall"
 					player_api.set_animation(player, animation, ani_spd)
@@ -225,8 +242,8 @@ minetest.register_globalstep(function()
 			-- get ladder pos node
 			local t_node = minetest.registered_nodes[minetest.get_node(ladder.n.pos).name]
 			if t_node and t_node.climbable then
-					ladder.n.is = true
-				end
+				ladder.n.is = true
+			end
 
 		---------------------------------------------------------
 		--            Start of Animation Cases                 --
@@ -250,7 +267,8 @@ minetest.register_globalstep(function()
 			   nc_slab >= 1 and
 			   not attached_to and
 			   not controls.sneak and
-			   not check_fsable(nodes_down,2,"a") then
+			   not check_fsable(nodes_down,2,"a") and 
+			   not has_jetpack then
 
 					animation = "duck_std"
 
@@ -276,7 +294,8 @@ minetest.register_globalstep(function()
 				   is_node_a_solid and
 				   check_fsable(nodes_down,1,"s") and
 				   not attached_to and
-				   not controls.sneak then
+				   not controls.sneak and 
+				   not has_jetpack then
 
 					animation = "swim"
 
@@ -292,7 +311,8 @@ minetest.register_globalstep(function()
 			elseif swim_anim == true and
 				   controls_wasd and
 				   check_fsable(nodes_down,2,"s") and
-				   not attached_to then
+				   not attached_to and 
+				   not has_jetpack then
 
 					animation = "swim"
 
@@ -320,7 +340,8 @@ minetest.register_globalstep(function()
 			elseif climb_anim  and
 			       not attached_to and
 				   ladder.n.is and
-				   (controls.jump or controls.sneak) then
+				   (controls.jump or controls.sneak) and 
+				   not has_jetpack then
 
 					-- Moved inside climb to save unessecary node checking
 					for k,def in pairs(ladder) do
@@ -355,7 +376,8 @@ minetest.register_globalstep(function()
 				   controls.up    	and
 				   not check_fsable(nodes_down,2,"a") and
 				   not attached_to and
-				   play_s <= 1 and is_slab == 1 then
+				   play_s <= 1 and is_slab == 1 and 
+				   not has_jetpack then
 
 					animation = "duck"
 
@@ -373,7 +395,8 @@ minetest.register_globalstep(function()
 			elseif crouch_anim    and
 				   controls.sneak and
 				   not check_fsable(nodes_down,2,"a") and
-				   not attached_to then
+				   not attached_to and 
+				   not has_jetpack then
 
 					animation = "duck_std"
 
@@ -393,7 +416,8 @@ minetest.register_globalstep(function()
 			elseif fly_anim == true and
 				   privs.fly == true and
 				   check_fsable(nodes_down,3,"a") and
-				   not attached_to then
+				   not attached_to and 
+				   not has_jetpack then
 
 					-- Vel.y value is a compromise for code simplicity,
 					-- Flyers wont get fall animation until faster than -18m/s
@@ -420,13 +444,15 @@ minetest.register_globalstep(function()
 			elseif fall_anim == true and
 				   check_fsable(nodes_down,5,"a") and
 				   vel.y < -0.5 and
-				   not attached_to then
+				   not attached_to and 
+				   not has_jetpack then
 
 					animation = "fall"
 					player_api.set_animation(player, animation..attack, ani_spd)
 					offset = 90
 					if tdebug then minetest.debug("fall") end
 			end
+
 
 		end
 
@@ -457,7 +483,6 @@ minetest.register_globalstep(function()
 				player:set_bone_position("Head", vector.new(0, 6.35, 0),vector.new(look_degree + offset, 0, 0))
 				-- Code by LoneWolfHT - Headanim mod MIT Licence --
 			end
-
 
 	-----------------------------
 	-- Update player meta
