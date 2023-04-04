@@ -267,8 +267,7 @@ minetest.register_globalstep(function()
 			   nc_slab >= 1 and
 			   not attached_to and
 			   not controls.sneak and
-			   not check_fsable(nodes_down,2,"a") and 
-			   not has_jetpack then
+			   not check_fsable(nodes_down,2,"a") then
 
 					animation = "duck_std"
 
@@ -376,8 +375,7 @@ minetest.register_globalstep(function()
 				   controls.up    	and
 				   not check_fsable(nodes_down,2,"a") and
 				   not attached_to and
-				   play_s <= 1 and is_slab == 1 and 
-				   not has_jetpack then
+				   play_s <= 1 and is_slab == 1 then
 
 					animation = "duck"
 
@@ -395,8 +393,7 @@ minetest.register_globalstep(function()
 			elseif crouch_anim    and
 				   controls.sneak and
 				   not check_fsable(nodes_down,2,"a") and
-				   not attached_to and 
-				   not has_jetpack then
+				   not attached_to then
 
 					animation = "duck_std"
 
